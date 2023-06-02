@@ -39,7 +39,7 @@ export function execute(...operations) {
  * Replaces source keys(data elements) to destination keys(data elements) with out changing state.data structure
  * @public
  * @example
- * mapp(state, state)
+ * map(state, state)
  * @function
  * @param {Object}  state - Json object containing keys and data values;
  * @param {Object} [params] - E.g. `{users:"haftamuk", sources: "eCHIS-CODES", concepts: "fp_new_at_10_to_14" }
