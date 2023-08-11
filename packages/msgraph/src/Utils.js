@@ -77,7 +77,7 @@ export function handleResponseError(response, data, method) {
 export const request = async (urlString, params = {}, method = 'GET') => {
   let url = urlString;
   const defaultHeaders = { 'Content-Type': 'application/json' };
-  const { headers } = params;
+  const { headers, asStream } = params;
   const setHeaders = { ...headers, ...defaultHeaders };
 
   delete params.headers;
@@ -96,9 +96,31 @@ export const request = async (urlString, params = {}, method = 'GET') => {
   const response = await fetch(url, options);
   const contentType = response.headers.get('Content-Type');
 
-  const data = contentType?.includes('application/json')
-    ? await response.json()
-    : await response.text();
+  let data;
+  if (asStream) {
+    const reader = response.body.getReader();
+    data = new ReadableStream({
+      start(controller) {
+        return pump();
+        function pump() {
+          return reader.read().then(({ done, value }) => {
+            // When no more data needs to be consumed, close the stream
+            if (done) {
+              controller.close();
+              return;
+            }
+            // Enqueue the next data chunk into our target stream
+            controller.enqueue(value);
+            return pump();
+          });
+        }
+      },
+    });
+  } else {
+    data = contentType?.includes('application/json')
+      ? await response.json()
+      : await response.text();
+  }
 
   handleResponseError(response, data, method);
 

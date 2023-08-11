@@ -608,13 +608,13 @@ export function parseCsv(csvData, parsingOptions = {}, callback) {
     if (options.chunkSize < 1) {
       throw new Error('chunkSize must be at least 1');
     }
+    console.log('resolvedCsvData', resolvedCsvData);
 
     let buffer = [];
-
     const parser =
       typeof resolvedCsvData === 'string'
         ? parse(resolvedCsvData, options)
-        : resolvedCsvData.pipe(parse(options));
+        : resolvedCsvData.pipeTo(parse(options));
 
     const flushBuffer = async currentState => {
       const nextState = callback
@@ -626,7 +626,9 @@ export function parseCsv(csvData, parsingOptions = {}, callback) {
       return [nextState, buffer];
     };
 
+    console.log('reading csv...');
     for await (const record of parser) {
+      console.log(record);
       buffer.push(record);
       if (buffer.length === options.chunkSize) {
         const [nextState, nextBuffer] = await flushBuffer(state);
